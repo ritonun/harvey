@@ -22,6 +22,7 @@ clock = pygame.time.Clock()
 
 # LOAD ------------------------------------------------------------------------
 pumpkin = pygame.image.load("../data/sprite/pumpkin.png")
+keyboard_map = "AZERTY"
 
 # FUNCTION --------------------------------------------------------------------
 def show_fps(caption=""):
@@ -153,6 +154,15 @@ def change_controls(keyboard_map="AZERTY"):
         controls["left"] = pygame.K_a
     return controls
 
+def get_level_size():
+    path = "../data/level/map.json"
+    with open(path, "r") as f:
+        data = json.load(f)
+        level = []
+        height = data["layers"][0]["height"]
+        width = data["layers"][0]["width"]
+    return width, height
+
 # CLASS -----------------------------------------------------------------------
 class Player:
     def __init__(self):
@@ -176,11 +186,24 @@ class Player:
         self.pos[0] += x_move
         self.pos[1] += y_move
 
+    def collision(self):
+        w, h = get_level_size()
+        if self.pos[0] < 0:
+            self.pos[0] = 0
+        elif self.pos[0] + self.rect.w > w * 16:
+            self.pos[0] = w * 16 - self.rect.w
+
+        if self.pos[1] < 0:
+            self.pos[1] = 0
+        elif self.pos[1] + self.rect.h > h * 16:
+            self.pos[1] = h * 16 - self.rect.h
+
     def get_center_pos(self):
         return (self.pos[0]+ self.rect.w / 2, self.pos[1] + self.rect.h / 2)
 
     def update(self, keys, dt):
         self.input(keys, dt)
+        self.collision()
 
     def draw(self, display, offset):
         display.blit(self.img, (self.pos[0] + offset[0], self.pos[1] + offset[1]))
@@ -188,7 +211,7 @@ class Player:
 
 # Not Global Var ------------------------------------------------------------------
 offset = [0, 0]
-controls = change_controls(keyboard_map="QWERTY")
+controls = change_controls()
 table = load_tileset("../data/sprite/tilesheet.png", 16, 16)
 level = load_level("../data/level/map.json")
 player = Player()
@@ -202,6 +225,12 @@ while run:
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 run = False
+            if event.key == pygame.K_v:
+                if keyboard_map == "AZERTY":
+                    keyboard_map = "QWERTY"
+                else:
+                    keyboard_map = "AZERTY"
+                controls = change_controls(keyboard_map=keyboard_map)
 
         if event.type == pygame.VIDEORESIZE:
             display = pygame.display.set_mode(event.size, pygame.RESIZABLE)
