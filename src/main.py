@@ -30,33 +30,47 @@ def show_fps(caption=""):
     str_fps = "{} - {:.2f} FPS".format(caption, fps)
     pygame.display.set_caption(str_fps)
 
-def light_effect(display, n, radius, pos, color=(80, 70, 20), hide_screen=True):
-    rect = None
+def light_effect(display, n, radius, pos, offset, color=(15, 15, 15), hide_screen=True):
+    color = (180, 167, 100)
+
+    pos = list(pos)
+    pos[0] += offset[0]
+    pos[1] += offset[1]
+
     radius_increment = radius / n
-    # create n gradient of light
+
+    #fill rest of the circle & screen in black
+    surf = surface = pygame.Surface((radius * 2, radius * 2))
+    pygame.draw.circle(surface, color, (radius, radius), radius)
+    x = pos[0] - radius
+    y = pos[1] - radius
+    rect = surface.get_rect()
+    rect.x = x
+    rect.y = y
+    display.blit(surface, (x, y), special_flags=pygame.BLEND_RGB_MIN)
+    
+    # aplly n circle with alpha incr
+    surface = pygame.Surface(display.get_size(), pygame.SRCALPHA)
+    start_alpha = 15
+    alpha_increment = (255 - start_alpha) / (n + 1)
+    color_alpha = [color[0], color[1], color[2], 255 - start_alpha]
     for i in range(0, n):
-        surface = pygame.Surface((radius * 2, radius * 2))
-        pygame.draw.circle(surface, color, (radius, radius), radius)
-        x = pos[0] - radius
-        y = pos[1] - radius
-        if i == 0:
-            rect = surface.get_rect()
-            rect.x = x
-            rect.y = y
-            display.blit(surface, (x, y), special_flags=pygame.BLEND_RGB_MIN)
-        display.blit(surface, (x, y), special_flags=pygame.BLEND_RGB_ADD)
+        pygame.draw.circle(surface, color_alpha, pos, radius)
+        color_alpha[3] -= alpha_increment
         radius -= radius_increment
-    if hide_screen:
-        width, height = display.get_size()
-        rect1 = pygame.Rect(0, 0, width, rect.y)
-        rect2 = pygame.Rect(0, 0, rect.x, height)
-        rect3 = pygame.Rect(0, rect.y + rect.h, width, height - (rect.y + rect.h))
-        rect4 = pygame.Rect(rect.x + rect.w, 0, width - (rect.x + rect.w), height)
-        BLACK = (0, 0, 0)
-        display.fill(BLACK, rect=rect1)
-        display.fill(BLACK, rect=rect2)
-        display.fill(BLACK, rect=rect3)
-        display.fill(BLACK, rect=rect4)
+    display.blit(surface, (0, 0))    
+
+    # fill all the screen black except central clight circle
+    WIDTH, HEIGHT = display.get_size()
+    rect1 = pygame.Rect(0, 0, WIDTH, rect.y)
+    rect2 = pygame.Rect(0, 0, rect.x, HEIGHT)
+    rect3 = pygame.Rect(0, rect.y + rect.h, WIDTH, HEIGHT - (rect.y + rect.h))
+    rect4 = pygame.Rect(rect.x + rect.w, 0, WIDTH - (rect.x + rect.w), HEIGHT)
+    BLACK = (0, 0, 0)
+    display.fill(BLACK, rect=rect1)
+    display.fill(BLACK, rect=rect2)
+    display.fill(BLACK, rect=rect3)
+    display.fill(BLACK, rect=rect4)
 
 def load_tileset(path, tile_width, tile_height):
     image = pygame.image.load(path).convert_alpha()
@@ -245,10 +259,10 @@ while run:
 
 # DRAW ------------------------------------------------------------------------
     display.fill(BLACK)
-    screen.fill(BLACK)
+    screen.fill((74, 94, 47))
 
     draw_level(screen, level, table, 16, offset)
-    #light_effect(screen, 3, 50, player.get_center_pos(), hide_screen=True)
+    light_effect(screen, 10, 60, player.get_center_pos(), offset, hide_screen=True)
     player.draw(screen, offset)
 
     display.blit(pygame.transform.scale(screen, display.get_size()), (0, 0))
