@@ -1,5 +1,6 @@
 import pygame
 import json
+import tools
 
 # CST -------------------------------------------------------------------------
 BLACK = (0, 0, 0)
@@ -74,20 +75,6 @@ def light_effect(display, n, radius, pos, offset, color=(15, 15, 15), hide_scree
     display.fill(BLACK, rect=rect2)
     display.fill(BLACK, rect=rect3)
     display.fill(BLACK, rect=rect4)
-
-def load_tileset(path, tile_width, tile_height):
-    image = pygame.image.load(path).convert_alpha()
-    image_width, image_height = image.get_size()
-
-    tile_table = []
-    for tile_x in range(0, int(image_width / tile_width)):
-        line = []
-        tile_table.append(line)
-        for tile_y in range(0, int(image_height / tile_height)):
-            rect = (tile_x * tile_width, tile_y * tile_height, 
-                    tile_width, tile_height)
-            line.append(image.subsurface(rect))
-    return tile_table
 
 def draw_tileset(table, display, tile_width, tile_height):
     for x, row in enumerate(table):
@@ -235,9 +222,9 @@ def get_collision_type(entity_rect, x_move, y_move, fix_rect):
 class Player:
     def __init__(self):
         self.img = pumpkin
-        self.pos = [100, 100]
+        self.pos = [25, 25]
         self.rect = self.img.get_rect()
-        self.speed = 200
+        self.speed = 165
 
     def input(self, keys, dt):
         x_move, y_move = 0, 0
@@ -254,6 +241,7 @@ class Player:
         return x_move, y_move
 
     def collision(self, collisions_rect, x_move, y_move):
+        # level boundaries
         w, h = get_level_size()
         if self.pos[0] + x_move < 0:
             x_move = 0
@@ -298,7 +286,7 @@ class Player:
 offset = [0, 0]
 tile_with_collision = [1, 9, 4, 12, 21, 22, 23]
 controls = change_controls()
-table = load_tileset("../data/sprite/tilesheet.png", 16, 16)
+table = tools.load_tileset("../data/sprite/tilesheet.png", 16, 16)
 level = load_level("../data/level/map.json")
 player = Player()
 
@@ -335,7 +323,7 @@ while run:
 
     draw_level(screen, level, table, 16, offset)
     #draw_tile_with_collision(screen, collisions_rect, offset)
-    #light_effect(screen, 10, 60, player.get_center_pos(), offset, hide_screen=True)
+    #light_effect(screen, 4, 60, player.get_center_pos(), offset, hide_screen=True)
     player.draw(screen, offset)
 
     display.blit(pygame.transform.scale(screen, display.get_size()), (0, 0))
