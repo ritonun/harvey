@@ -207,23 +207,15 @@ def get_collision_type(entity_rect, x_move, y_move, fix_rect):
                        "left": False,
                        "right": False}
 
-    x_rect = pygame.Rect(entity_rect)
-    x_rect.x += x_move
-    if x_rect.colliderect(fix_rect):
+    final_rect = pygame.Rect(entity_rect)
+    final_rect.x += x_move
+    if final_rect.colliderect(fix_rect):
         collisions_axe["x"] = True
-    else:
-        x_rect.y += y_move
-        if x_rect.colliderect(fix_rect):
-            collisions_axe["y"] = True
 
-    y_rect = pygame.Rect(entity_rect)
-    y_rect.y += y_move
-    if y_rect.colliderect(fix_rect):
+    final_rect = pygame.Rect(entity_rect)
+    final_rect.y += y_move
+    if final_rect.colliderect(fix_rect):
         collisions_axe["y"] = True
-    else:
-        y_rect.x += x_move
-        if y_rect.colliderect(fix_rect):
-            collisions_axe["x"] = True
 
     if collisions_axe["x"]:
         if x_move > 0:
@@ -298,6 +290,8 @@ class Player:
 
     def draw(self, display, offset):
         display.blit(self.img, (self.pos[0] + offset[0], self.pos[1] + offset[1]))
+        #pygame.draw.rect(display, (255,0,0), (self.pos[0] + offset[0], self.pos[1] + offset[1],
+         #                                     self.rect.w, self.rect.h), 3)
 
 
 # Not Global Var ------------------------------------------------------------------
