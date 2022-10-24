@@ -1,7 +1,7 @@
 import pygame
 import json
 
-# CONSTANTE -------------------------------------------------------------------------
+# CST -------------------------------------------------------------------------
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
@@ -149,16 +149,22 @@ def get_offset(screen, player_pos, offset):
 
 def update_offset(screen, player, offset, dt):
     w, h = screen.get_size()
-    if player.pos[0] + player.rect.w > (3/4) * w - offset[0]:
-        offset[0] -= player.speed * dt
-    elif player.pos[0] < (1/4) * w - offset[0]:
-        offset[0] += player.speed * dt
+    x_offset, y_offset = 0, 0
+    x = player.pos[0] + player.rect.w / 2
+    y = player.pos[1] + player.rect.h / 2
 
-    if player.pos[1] < (1/4) * h - offset[1]:
-        offset[1] += player.speed * dt
-    elif player.pos[1] + player.rect.h > (3/4) * h - offset[1]:
-        offset[1] -= player.speed * dt
+    if x > w * (1/2) - offset[0] + player.rect.w / 2:
+        x_offset =  w * (1/2) - offset[0] + player.rect.w / 2 - x
+    elif x < w * (1/2) - offset[0] - player.rect.w / 2:
+        x_offset = w * (1/2) - offset[0] - player.rect.w / 2 - x
 
+    if y > h * (1/2) - offset[1] + player.rect.h / 2:
+        y_offset = h * (1/2) - offset[1] + player.rect.h / 2 - y
+    elif y < h * (1/2) - offset[1] - player.rect.h / 2:
+        y_offset = h * (1/2) - offset[1] - player.rect.h / 2 - y
+
+    offset[0] += x_offset
+    offset[1] += y_offset
     return offset
 
 def change_controls(keyboard_map="AZERTY"):
@@ -335,7 +341,7 @@ while run:
 
     draw_level(screen, level, table, 16, offset)
     #draw_tile_with_collision(screen, collisions_rect, offset)
-    light_effect(screen, 10, 60, player.get_center_pos(), offset, hide_screen=True)
+    #light_effect(screen, 10, 60, player.get_center_pos(), offset, hide_screen=True)
     player.draw(screen, offset)
 
     display.blit(pygame.transform.scale(screen, display.get_size()), (0, 0))
