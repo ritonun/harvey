@@ -1,6 +1,6 @@
 import pygame
 import json
-import tools
+from tools import load_tileset, load_tileset_1d, Animation, change_anim
 
 # CST -------------------------------------------------------------------------
 BLACK = (0, 0, 0)
@@ -22,11 +22,27 @@ pygame.display.set_caption("Pump'keet up")
 pygame.display.set_icon(pygame.image.load("../data/sprite/icon.png").convert())
 screen = pygame.Surface((round(WIDTH / screen_ratio), round((WIDTH / screen_ratio) / RATIO)))
 clock = pygame.time.Clock()
+animation_group = pygame.sprite.Group()
 
 # LOAD ------------------------------------------------------------------------
 pumpkin = pygame.image.load("../data/sprite/pumpkin.png")
 keyboard_map = "AZERTY"
 level_path = "../data/level/map.json"
+
+speed = 4
+loop = True
+resize = 1
+anim_player = {"up": Animation(0, 0, load_tileset_1d("../data/sprite/player/player_up.png", TILE_SIZE, TILE_SIZE, resize=resize), speed=speed, loop=loop),
+               "down": Animation(0, 0, load_tileset_1d("../data/sprite/player/player_down.png", TILE_SIZE, TILE_SIZE, resize=resize), speed=speed, loop=loop),
+               "right": Animation(0, 0, load_tileset_1d("../data/sprite/player/player_right.png", TILE_SIZE, TILE_SIZE, resize=resize), speed=speed, loop=loop),
+               "left": Animation(0, 0, load_tileset_1d("../data/sprite/player/player_left.png", TILE_SIZE, TILE_SIZE, resize=resize), speed=speed, loop=loop)}
+speed = 6
+loop = True
+resize = 1
+small_pumpkin_anim = {"up": Animation(0, 0, load_tileset_1d("../data/sprite/small_pumpkin/up.png", TILE_SIZE, TILE_SIZE, resize=resize), speed=speed, loop=loop),
+                      "down": Animation(0, 0, load_tileset_1d("../data/sprite/small_pumpkin/down.png", TILE_SIZE, TILE_SIZE, resize=resize), speed=speed, loop=loop),
+                      "right": Animation(0, 0, load_tileset_1d("../data/sprite/small_pumpkin/right.png", TILE_SIZE, TILE_SIZE, resize=resize), speed=speed, loop=loop),
+                      "left": Animation(0, 0, load_tileset_1d("../data/sprite/small_pumpkin/left.png", TILE_SIZE, TILE_SIZE, resize=resize), speed=speed, loop=loop)}
 
 # FUNCTION --------------------------------------------------------------------
 def show_fps(caption=""):
@@ -217,14 +233,34 @@ def get_collision_type(entity_rect, x_move, y_move, fix_rect):
 
     return collision_types, collisions_axe
 
+def generate_pumpkin(mob_list):
+    for i in range(0, 10):
+        mob_list.append(SmallPumpkin((25, 25)))
+
+def update_mob(mob_list, offset):
+    for i in mob_list:
+        i.update(offset)
 
 # CLASS -----------------------------------------------------------------------
+class SmallPumpkin:
+    def __init__(self, pos):
+        self.pos = [pos[0], pos[1]]
+        self.rect = pygame.Rect(0, 0, 12, 12)
+        self.speed = 225
+        self.direction = "right"
+        change_anim(self.direction, small_pumpkin_anim, animation_group)
+
+    def update(self):
+        pass
+
+
 class Player:
     def __init__(self):
-        self.img = pumpkin
         self.pos = [25, 25]
-        self.rect = self.img.get_rect()
+        self.rect = pygame.Rect(0, 0, TILE_SIZE, TILE_SIZE)
         self.speed = 165
+        self.direction = "right"
+        change_anim(self.direction, anim_player, animation_group)
 
     def input(self, keys, dt):
         x_move, y_move = 0, 0
@@ -266,15 +302,36 @@ class Player:
 
         return x_move, y_move
 
+    def player_anim(self, x_move, y_move, offset):
+        for anim in anim_player:
+            anim_player[anim].rect.x = self.pos[0] + offset[0]
+            anim_player[anim].rect.y = self.pos[1] + offset[1]
+
+        old_direction = str(self.direction)
+
+        if y_move > 0:
+            self.direction = "down"
+        elif y_move < 0:
+            self.direction = "up"
+        if x_move > 0:
+            self.direction = "right"
+        elif x_move < 0:
+            self.direction = "left"
+
+        if old_direction != self.direction:
+            change_anim(self.direction, anim_player, animation_group)
+
     def get_center_pos(self):
         return (self.pos[0]+ self.rect.w / 2, self.pos[1] + self.rect.h / 2)
 
-    def update(self, keys, dt, collisions_rect):
+    def update(self, keys, dt, collisions_rect, offset):
         x_move, y_move = self.input(keys, dt)
         x_move, y_move = self.collision(collisions_rect, x_move, y_move)
-
+        
         self.pos[0] += x_move
         self.pos[1] += y_move
+
+        self.player_anim(x_move, y_move, offset)
 
     def draw(self, display, offset):
         display.blit(self.img, (self.pos[0] + offset[0], self.pos[1] + offset[1]))
@@ -286,9 +343,11 @@ class Player:
 offset = [0, 0]
 tile_with_collision = [1, 9, 4, 12, 21, 22, 23]
 controls = change_controls()
-table = tools.load_tileset("../data/sprite/tilesheet.png", 16, 16)
+table = load_tileset("../data/sprite/tilesheet.png", 16, 16)
 level = load_level("../data/level/map.json")
 player = Player()
+mob_list = []
+generate_pumpkin(mob_list)
 
 # MAINLOOP --------------------------------------------------------------------
 run = True
@@ -314,8 +373,10 @@ while run:
 # UPDATE ----------------------------------------------------------------------
     offset = update_offset(screen, player, offset, dt)
     collisions_rect = get_collision_rect(tile_with_collision, level)
-    player.update(keys, dt, collisions_rect)
+    player.update(keys, dt, collisions_rect, offset)
     show_fps("Pump'keet up")
+    animation_group.update()
+    update_mob(mob_list)
 
 # DRAW ------------------------------------------------------------------------
     display.fill(BLACK)
@@ -324,7 +385,8 @@ while run:
     draw_level(screen, level, table, 16, offset)
     #draw_tile_with_collision(screen, collisions_rect, offset)
     #light_effect(screen, 4, 60, player.get_center_pos(), offset, hide_screen=True)
-    player.draw(screen, offset)
+    #player.draw(screen, offset)
+    animation_group.draw(screen)
 
     display.blit(pygame.transform.scale(screen, display.get_size()), (0, 0))
     pygame.display.update()

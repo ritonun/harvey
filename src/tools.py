@@ -30,6 +30,16 @@ def load_tileset(path, tile_width, tile_height):
             line.append(image.subsurface(rect))
     return tile_table
 
+def change_anim(anim, list_anim, animationGroup):
+    for key in list_anim:
+        if key == anim:
+            animationGroup.add(list_anim[key])
+        else:
+            try:
+                animationGroup.remove(list_anim[key])
+            except Exception:
+                pass
+
 
 class Animation(pygame.sprite.Sprite):
     def __init__(self, x, y, image_list, speed=3, loop=False):
