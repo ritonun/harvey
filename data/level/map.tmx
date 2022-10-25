@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.9" tiledversion="1.9.0" orientation="orthogonal" renderorder="right-down" width="37" height="21" tilewidth="16" tileheight="16" infinite="0" nextlayerid="3" nextobjectid="1">
+<map version="1.9" tiledversion="1.9.0" orientation="orthogonal" renderorder="right-down" width="37" height="21" tilewidth="16" tileheight="16" infinite="0" nextlayerid="4" nextobjectid="11">
  <editorsettings>
   <export target="map.json" format="json"/>
  </editorsettings>
@@ -54,4 +54,10 @@
 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 </data>
  </layer>
+ <objectgroup id="3" name="Objects">
+  <object id="7" name="mob_spawn" x="240" y="96" width="16" height="16"/>
+  <object id="8" name="mob_spawn" x="432" y="96" width="16" height="16"/>
+  <object id="9" name="mob_spawn" x="240" y="224" width="16" height="16"/>
+  <object id="10" name="mob_spawn" x="176" y="224" width="16" height="16"/>
+ </objectgroup>
 </map>

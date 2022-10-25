@@ -1,5 +1,7 @@
-import pygame
 import json
+import pygame
+import random
+
 from tools import load_tileset, load_tileset_1d, Animation, change_anim
 
 # CST -------------------------------------------------------------------------
@@ -25,7 +27,7 @@ clock = pygame.time.Clock()
 animation_group = pygame.sprite.Group()
 
 # LOAD ------------------------------------------------------------------------
-pumpkin = pygame.image.load("../data/sprite/pumpkin.png")
+small_pumpkin_img = pygame.image.load("../data/sprite/small_pumpkin.png").convert_alpha()
 keyboard_map = "AZERTY"
 level_path = "../data/level/map.json"
 
@@ -105,20 +107,26 @@ def load_level(path=level_path):
         width = data["layers"][0]["width"]
 
         level = []
+        mob_spawn = []
         for layers in data["layers"]:
-            layer = []
-            x, y = 0, 0
-            row = []
-            for i in layers["data"]:
-                row.append(i)
-                x += 1
-                if x >= width:
-                    x = 0
-                    y += 1
-                    layer.append(row)
-                    row = []
-            level.append(layer)
-    return level
+            if layers["name"] == "Objects":
+                for objects in layers["objects"]:
+                    rect = pygame.Rect(int(objects["x"]), int(objects["y"]), int(objects["width"]), int(objects["height"]))
+                    mob_spawn.append(pygame.Rect(rect))
+            else:
+                layer = []
+                x, y = 0, 0
+                row = []
+                for i in layers["data"]:
+                    row.append(i)
+                    x += 1
+                    if x >= width:
+                        x = 0
+                        y += 1
+                        layer.append(row)
+                        row = []
+                level.append(layer)
+    return level, mob_spawn
 
 def get_tile_table_coordinate(number, tileset_width):
     if number <= 0:
@@ -237,21 +245,32 @@ def generate_pumpkin(mob_list):
     for i in range(0, 10):
         mob_list.append(SmallPumpkin((25, 25)))
 
-def update_mob(mob_list, offset):
+def update_mob(mob_list):
     for i in mob_list:
-        i.update(offset)
+        i.update()
+
+def draw_mob(mob_list, display, offset):
+    for i in mob_list:
+        i.draw(display, offset)
+
+def draw_list_rect(display, rects, color=(0, 150, 0), outline=1, offset=[0, 0]):
+    for rect in rects:
+        pygame.draw.rect(display, color, (rect.x + offset[0], rect.y + offset[1], rect.w, rect.h), outline)
 
 # CLASS -----------------------------------------------------------------------
 class SmallPumpkin:
     def __init__(self, pos):
         self.pos = [pos[0], pos[1]]
-        self.rect = pygame.Rect(0, 0, 12, 12)
         self.speed = 225
-        self.direction = "right"
-        change_anim(self.direction, small_pumpkin_anim, animation_group)
+        self.img = small_pumpkin_img
+        self.rect = pygame.Rect(0, 0, 12, 12)
 
     def update(self):
-        pass
+        self.pos[0] += random.randint(0, 2) - 1
+        self.pos[1] += random.randint(0, 2) - 1
+
+    def draw(self, display, offset):
+        display.blit(self.img, (self.pos[0] + offset[0], self.pos[1] + offset[1]))
 
 
 class Player:
@@ -344,7 +363,7 @@ offset = [0, 0]
 tile_with_collision = [1, 9, 4, 12, 21, 22, 23]
 controls = change_controls()
 table = load_tileset("../data/sprite/tilesheet.png", 16, 16)
-level = load_level("../data/level/map.json")
+level, mob_spawn = load_level("../data/level/map.json")
 player = Player()
 mob_list = []
 generate_pumpkin(mob_list)
@@ -364,12 +383,13 @@ while run:
                 else:
                     keyboard_map = "AZERTY"
                 controls = change_controls(keyboard_map=keyboard_map)
-
         if event.type == pygame.VIDEORESIZE:
             display = pygame.display.set_mode(event.size, pygame.RESIZABLE)
+
     pos = pygame.mouse.get_pressed()
     keys = pygame.key.get_pressed()
     dt = clock.tick(FPS) / 1000
+    
 # UPDATE ----------------------------------------------------------------------
     offset = update_offset(screen, player, offset, dt)
     collisions_rect = get_collision_rect(tile_with_collision, level)
@@ -386,7 +406,9 @@ while run:
     #draw_tile_with_collision(screen, collisions_rect, offset)
     #light_effect(screen, 4, 60, player.get_center_pos(), offset, hide_screen=True)
     #player.draw(screen, offset)
+    draw_mob(mob_list, screen, offset)
     animation_group.draw(screen)
+    draw_list_rect(screen, mob_spawn, offset=offset)
 
     display.blit(pygame.transform.scale(screen, display.get_size()), (0, 0))
     pygame.display.update()
